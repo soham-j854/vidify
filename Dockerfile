@@ -1,52 +1,28 @@
-# Base image
-FROM node:18-alpine AS base
+FROM node:18-alpine
 
-# Install dependencies only when needed
-FROM base AS deps
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci
+# Install dependencies for yt-dlp (Python, ffmpeg)
+RUN apk add --no-cache python3 py3-pip ffmpeg
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-# Disable telemetry during build
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
-
-# Production image, copy all the files and run next
-FROM base AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# CRITICAL: Install Python, ffmpeg, and yt-dlp for the downloader to work
-RUN apk add --no-cache python3 py3-pip ffmpeg && \
-    ln -sf python3 /usr/bin/python
-# Create a virtual environment for yt-dlp
+# Create a virtual environment and install yt-dlp
+# This avoids PEP 668 "externally-managed-environment" errors
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install yt-dlp
+RUN pip3 install -U yt-dlp
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+WORKDIR /app
 
-COPY --from=builder /app/public ./public
+COPY package*.json ./
+# Install ALL dependencies (including devDependencies) so we can build
+RUN npm install
 
-# Set the correct permission for prerender cache
-# mkdir .next folder has been removed as it is created by next build
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY . .
 
-USER nextjs
+# Build the Next.js application
+RUN npm run build
 
+# Expose the listening port
 EXPOSE 3000
 
-ENV PORT=3000
-# set hostname to localhost
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["node", "server.js"]
+# Start the application using npm start (which runs "next start")
+# This automatically respects process.env.PORT
+CMD ["npm", "start"]
