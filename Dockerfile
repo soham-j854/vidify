@@ -13,7 +13,8 @@ WORKDIR /app
 
 COPY package*.json ./
 # Install ALL dependencies (including devDependencies) so we can build
-RUN npm install
+# Use --legacy-peer-deps to ignore the eslint version conflict
+RUN npm install --legacy-peer-deps
 
 COPY . .
 
@@ -23,6 +24,11 @@ RUN npm run build
 # Expose the listening port
 EXPOSE 3000
 
-# Start the application using npm start (which runs "next start")
-# This automatically respects process.env.PORT
+# Next.js collects usage statistics by default, we can disable this
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Ensure Next.js listens on all interfaces (vital for Docker/Railway)
+ENV HOSTNAME="0.0.0.0"
+
+# Start the application using npm start
 CMD ["npm", "start"]
