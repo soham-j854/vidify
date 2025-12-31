@@ -141,10 +141,16 @@ export async function POST(request: NextRequest) {
       '--no-warnings',
       '--no-progress',
       '--no-color',
-      '--no-mtime',       // Don't set file modification time (irrelevant for stream)
-      '--concurrent-fragments', '4', // Download 4 parts at once (faster from YouTube)
+      '--no-mtime',
+      '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      '--extractor-args', 'youtube:player_client=web',
+      '--extractor-args', 'youtube:player-skip=js',
+      '--geo-bypass',
+      '--socket-timeout', '30',
+      '--http-chunk-size', '1048576',
+      '--concurrent-fragments', '4',
       '-f', formatSelector,
-      '-o', '-', // Output to stdout
+      '-o', '-',
       trimmedUrl,
     ]
 
