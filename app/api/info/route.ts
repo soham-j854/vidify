@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getVideoInfo } from '@/lib/ytdlp'
+import { getVideoInfo } from '@/lib/ytstream'
 import type { VideoInfoResponse } from '@/lib/types'
 
 /**
  * POST /api/info
  * 
- * Accepts a YouTube URL and returns video metadata using yt-dlp
+ * Accepts a YouTube URL and returns video metadata using YTStream API
  * 
  * Request body:
  * {
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get video info using yt-dlp
+    // Get video info using YTStream API
     const videoInfo = await getVideoInfo(url)
 
     // Return successful response

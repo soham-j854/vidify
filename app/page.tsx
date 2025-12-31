@@ -85,7 +85,7 @@ export default function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          url: videoInfo.url || videoInfo.webpage_url, // Ensure URL is passed
+          url: videoInfo.url || videoInfo.webpage_url,
           format: selectedFormat,
           quality: selectedFormat === 'audio' ? undefined : selectedQuality,
         }),
@@ -102,14 +102,26 @@ export default function Home() {
         }
       }
 
-      // Handle file download from response blob
-      const blob = await response.blob()
+      // Handle JSON response with download link
+      const data = await response.json()
+      
+      if (!data.downloadUrl) {
+        throw new Error('No download link received from server')
+      }
+
+      // Fetch the actual file from the download URL
+      const downloadResponse = await fetch(data.downloadUrl)
+      if (!downloadResponse.ok) {
+        throw new Error('Failed to fetch the download file')
+      }
+
+      // Create and trigger download
+      const blob = await downloadResponse.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      // Use title from videoInfo for filename, sanitize it
       const safeTitle = videoInfo.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()
-      const ext = selectedFormat === 'audio' ? 'mp3' : 'mp4'
+      const ext = selectedFormat === 'audio' ? 'm4a' : 'mp4'
       a.download = `${safeTitle}.${ext}`
       document.body.appendChild(a)
       a.click()
